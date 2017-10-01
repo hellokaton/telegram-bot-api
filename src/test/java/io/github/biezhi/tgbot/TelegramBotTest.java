@@ -20,7 +20,7 @@ public class TelegramBotTest {
 
     @Before
     public void before() {
-        bot = new TelegramBot(TOKEN).useProxy("127.0.0.1", 1087);
+        bot = new TelegramBot(TOKEN)/*.useProxy("127.0.0.1", 1087)*/;
     }
 
     @Test
