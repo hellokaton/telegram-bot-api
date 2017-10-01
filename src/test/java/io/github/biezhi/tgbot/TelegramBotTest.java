@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.concurrent.Executor;
 
 /**
  * @author biezhi
@@ -14,7 +15,7 @@ import java.io.File;
 @Slf4j
 public class TelegramBotTest {
 
-    private static final String TOKEN = "YOUR BOT TOKEN";
+    private static final String TOKEN = "";
 
     private TelegramBot bot;
 
@@ -25,32 +26,44 @@ public class TelegramBotTest {
 
     @Test
     public void testGetMe() {
-        GetMeResponse response = bot.getMe();
-        log.info("GetMe: {}", response);
+        try {
+            GetMeResponse response = bot.getMe();
+            log.info("GetMe: {}", response);
+        } catch (Exception e) {
+            log.error("", e);
+        }
     }
 
     @Test
-    public void testOnStart(){
-        bot.onStart(message -> bot.text(message, "欢迎使用XX机器人。"));
+    public void testOnStart() {
+        try {
+            bot.onStart(message -> bot.text(message, "欢迎使用XX机器人。"));
+        } catch (Exception e) {
+            log.error("", e);
+        }
     }
 
     @Test
     public void testMessage() throws InterruptedException {
-        bot.onHelp(message -> {
+        try {
+            bot.onHelp(message -> {
                 log.info("{}", message);
                 bot.text(message, "/echo\r\n/me\r\n/hi");
             })
-            .onCmd("/echo", message -> {
-                log.info("{}", message);
-                bot.text(message, "Hi, " + message.getFrom().getUsername() + ". I,m fine.");
-            })
-            .onCmd("/hi", message -> bot.text(message, "Hi"))
-            .onCmd("/me", message -> bot.text(message, bot.toJson(bot.getMe())))
-            .onCmd("/img", message -> {
-                log.info("收到图片请求");
-                bot.photo(message, new File("/Users/biezhi/Pictures/20150812204022.jpeg"));
-            })
-            .await();
+                    .onCmd("/echo", message -> {
+                        log.info("{}", message);
+                        bot.text(message, "Hi, " + message.getFrom().getUsername() + ". I,m fine.");
+                    })
+                    .onCmd("/hi", message -> bot.text(message, "Hi"))
+                    .onCmd("/me", message -> bot.text(message, bot.toJson(bot.getMe())))
+                    .onCmd("/img", message -> {
+                        log.info("收到图片请求");
+                        bot.photo(message, new File("/Users/biezhi/Pictures/20150812204022.jpeg"));
+                    });
+                    //.await();
+        } catch (Exception e) {
+            log.error("", e);
+        }
     }
 
 }

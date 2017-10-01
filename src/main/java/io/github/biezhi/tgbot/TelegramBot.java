@@ -40,7 +40,7 @@ public class TelegramBot {
     private          FileApi fileApi;
     private volatile boolean stopUpdates;
     private Map<String, Consumer<Message>> mappings        = new HashMap<>();
-    private Options                        options         = new Options();
+    private Options                        options         = Options.builder().build();
     private ExecutorService                executorService = Executors.newFixedThreadPool(options.getExecutorPoolSize());
 
     public TelegramBot(String token) {
@@ -246,6 +246,9 @@ public class TelegramBot {
     }
 
     private <R extends BotResponse> R executeCommand(BotRequest request) {
+        if (null == token || "".equals(token)) {
+            throw new BotException("请确认您机器人Token已填写");
+        }
         String url = String.format(Const.API_URL + "%s/%s", token, request.getMethod());
         if (options.isDebug()) {
             log.info("Request : {}", url);
