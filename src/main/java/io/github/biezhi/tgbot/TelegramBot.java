@@ -27,6 +27,8 @@ import java.util.function.Consumer;
 import static java.net.Proxy.Type.HTTP;
 
 /**
+ * Telegram机器人
+ *
  * @author biezhi
  * @date 2017/9/30
  */

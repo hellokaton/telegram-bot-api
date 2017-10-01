@@ -9,6 +9,11 @@ import java.io.File;
 import java.util.concurrent.Executor;
 
 /**
+ * 机器人测试代码
+ * <p>
+ * 1. 请填写你申请的机器人Token
+ * 2. 将注释 await 代码打开
+ *
  * @author biezhi
  * @date 2017/9/30
  */
@@ -60,7 +65,7 @@ public class TelegramBotTest {
                         log.info("收到图片请求");
                         bot.photo(message, new File("/Users/biezhi/Pictures/20150812204022.jpeg"));
                     });
-                    //.await();
+            //.await();
         } catch (Exception e) {
             log.error("", e);
         }
