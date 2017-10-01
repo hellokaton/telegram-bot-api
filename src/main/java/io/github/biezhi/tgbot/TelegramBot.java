@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,8 +39,8 @@ public class TelegramBot {
     private Gson gson = new Gson();
     private          String  token;
     private          Proxy   proxy;
-    private          boolean startUpdates;
     private          FileApi fileApi;
+    private volatile boolean startUpdates;
     private volatile boolean stopUpdates;
     private Map<String, Consumer<Message>> mappings        = new HashMap<>();
     private Options                        options         = Options.builder().build();
@@ -95,11 +96,9 @@ public class TelegramBot {
         }
         mappings.put(cmdText, consumer);
         if (!startUpdates) {
-            executorService.execute(() -> {
-                startUpdates = true;
-                GetUpdates getUpdates = new GetUpdates();
-                this.getUpdates(getUpdates);
-            });
+            startUpdates = true;
+            GetUpdates getUpdates = new GetUpdates();
+            this.getUpdates(getUpdates);
         }
         return this;
     }
@@ -196,25 +195,37 @@ public class TelegramBot {
         if (stopUpdates) {
             return;
         }
-        GetUpdatesResponse response = this.executeCommand(request);
-        if (!response.isOk() || response.getResult() == null || response.getResult().size() <= 0) {
-            this.sleep();
-            getUpdates(request);
-            return;
-        }
-        List<Update> updates = response.getResult();
-        if (!mappings.isEmpty()) {
-            Set<String> texts = mappings.keySet();
-            updates.stream()
-                    .map(Update::getMessage)
-                    .filter(message -> texts.contains(message.getText()))
-                    .forEach(message -> mappings.get(message.getText()).accept(message));
+        this.executeAsync(request, new Callback<GetUpdates, GetUpdatesResponse>() {
+            @Override
+            public void onSuccess(GetUpdates request, GetUpdatesResponse response) {
+                if (!response.isOk() || response.getResult() == null || response.getResult().size() <= 0) {
+                    sleep();
+                    getUpdates(request);
+                    return;
+                }
+                List<Update> updates = response.getResult();
+                if (!mappings.isEmpty()) {
+                    Set<String> texts = mappings.keySet();
+                    updates.stream()
+                            .map(Update::getMessage)
+                            .filter(message -> texts.contains(message.getText()))
+                            .forEach(message -> mappings.get(message.getText()).accept(message));
 
-            int offset = lastUpdateId(updates) + 1;
-            request = request.offset(offset);
-        }
-        sleep();
-        getUpdates(request);
+                    int offset = lastUpdateId(updates) + 1;
+                    request = request.offset(offset);
+                }
+                sleep();
+                getUpdates(request);
+            }
+
+            @Override
+            public void onFailure(GetUpdates request, Throwable e) {
+                log.error("调用API出现异常", e);
+                sleep();
+                getUpdates(request);
+            }
+        });
+
     }
 
     private int lastUpdateId(List<Update> updates) {
@@ -236,18 +247,15 @@ public class TelegramBot {
     }
 
     /**
-     * 执行一个请求
+     * 同步执行请求
      *
-     * @param request 请求对象
-     * @param <T>     请求类型
-     * @param <R>     响应类型
+     * @param request
+     * @param <T>
+     * @param <R>
      * @return
+     * @throws Exception
      */
-    public <T extends BotRequest, R extends BotResponse> R execute(BotRequest<T, R> request) {
-        return this.executeCommand(request);
-    }
-
-    private <R extends BotResponse> R executeCommand(BotRequest request) {
+    public <T extends BotRequest, R extends BotResponse> R execute(T request) {
         if (null == token || "".equals(token)) {
             throw new BotException("请确认您机器人Token已填写");
         }
@@ -278,12 +286,41 @@ public class TelegramBot {
         } else {
             body = httpRequest.send(this.toJson(request.getParameters()).getBytes()).body();
         }
-
         if (options.isDebug()) {
             log.info("Response: {}", body);
         }
-        R result = gson.fromJson(body, request.getResponseType());
-        return result;
+        R response = gson.fromJson(body, request.getResponseType());
+        return response;
+    }
+
+    /**
+     * 异步执行一个请求
+     *
+     * @param request 请求对象
+     * @param <T>     请求类型
+     * @param <R>     响应类型
+     * @return
+     */
+    public <T extends BotRequest, R extends BotResponse> void executeAsync(T request, Callback<T, R> callback) {
+        CompletableFuture.supplyAsync(() -> {
+            R response = this.execute(request);
+            return response;
+        }, executorService).whenComplete((r, throwable) -> {
+            if (null == throwable) {
+                callback.onSuccess(request, r);
+            } else {
+                callback.onFailure(request, throwable);
+            }
+        });
+
+//        executorService.submit(() -> {
+//            try {
+//                R response = this.execute(request);
+//                callback.onSuccess(request, response);
+//            } catch (Exception e) {
+//                callback.onFailure(request, e);
+//            }
+//        });
     }
 
     public String getFullFilePath(File file) {
@@ -298,7 +335,7 @@ public class TelegramBot {
         try {
             Thread.currentThread().join();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("Join异常", e);
         }
     }
 

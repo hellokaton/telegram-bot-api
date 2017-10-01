@@ -6,7 +6,7 @@
 
     <groupId>io.github.biezhi</groupId>
     <artifactId>telegram-bot-api</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <name>telegram-bot-api</name>
     <url>https://github.com/biezhi/telegram-bot-api</url>
     <description>Telegram bot library by Java</description>
