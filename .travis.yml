@@ -3,5 +3,8 @@ language: java
 jdk:
   - oraclejdk8
 
+script:
+  - mvn clean compile -Dmaven.test.skip=true
+
 before_install:
     - export TZ='Asia/Shanghai'
