@@ -30,8 +30,13 @@ public class TelegramBotTest {
     }
 
     @Test
+    public void testOnStart(){
+        bot.onStart(message -> bot.text(message, "欢迎使用XX机器人。"));
+    }
+
+    @Test
     public void testMessage() throws InterruptedException {
-        bot.onCmd("/help", message -> {
+        bot.onHelp(message -> {
                 log.info("{}", message);
                 bot.text(message, "/echo\r\n/me\r\n/hi");
             })
