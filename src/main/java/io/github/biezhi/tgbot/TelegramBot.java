@@ -60,8 +60,38 @@ public class TelegramBot {
         return this;
     }
 
-    public TelegramBot onCmd(String text, Consumer<Message> consumer) {
-        mappings.put(text, consumer);
+    /**
+     * 启动机器人后发的消息
+     *
+     * @param consumer
+     * @return
+     */
+    public TelegramBot onStart(Consumer<Message> consumer) {
+        return this.onCmd("/start", consumer);
+    }
+
+    /**
+     * 输入 /help 指令后
+     *
+     * @param consumer
+     * @return
+     */
+    public TelegramBot onHelp(Consumer<Message> consumer) {
+        return this.onCmd("/help", consumer);
+    }
+
+    /**
+     * 监听指令
+     *
+     * @param cmdText  指令文本
+     * @param consumer 处理器
+     * @return
+     */
+    public TelegramBot onCmd(String cmdText, Consumer<Message> consumer) {
+        if (mappings.containsKey(cmdText)) {
+            throw new BotException("请不要重复监听相同指令.");
+        }
+        mappings.put(cmdText, consumer);
         if (!startUpdates) {
             executorService.execute(() -> {
                 startUpdates = true;
