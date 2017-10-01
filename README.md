@@ -13,6 +13,18 @@
 - 依赖更少
 - 灵活配置
 
+## 快速接入
+
+**下面是Maven坐标**
+
+```java
+<dependency>
+    <groupId>io.github.biezhi</groupId>
+    <artifactId>telegram-bot-api</artifactId>
+    <version>最新版本</version>
+</dependency>
+```
+
 ## 示例代码
 
 ### GetMe
@@ -31,3 +43,8 @@ bot.onCmd("/help", message -> {
     bot.text(message, "/echo\r\n/me\r\n/hi");
 }).await();
 ```
+
+## 开源协议
+
+[Apache2](LICENSE)
+
