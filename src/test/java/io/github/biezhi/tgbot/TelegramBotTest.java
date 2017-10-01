@@ -14,7 +14,7 @@ import java.io.File;
 @Slf4j
 public class TelegramBotTest {
 
-    private static final String TOKEN = "YOUR BOT TOKEn";
+    private static final String TOKEN = "YOUR BOT TOKEN";
 
     private TelegramBot bot;
 
