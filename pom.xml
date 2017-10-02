@@ -64,6 +64,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.github.biezhi</groupId>
+            <artifactId>webp-io</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>

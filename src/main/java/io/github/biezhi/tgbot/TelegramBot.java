@@ -2,10 +2,7 @@ package io.github.biezhi.tgbot;
 
 import com.google.gson.Gson;
 import io.github.biezhi.request.Request;
-import io.github.biezhi.tgbot.api.FileItem;
-import io.github.biezhi.tgbot.api.FileApi;
-import io.github.biezhi.tgbot.api.Message;
-import io.github.biezhi.tgbot.api.Update;
+import io.github.biezhi.tgbot.api.*;
 import io.github.biezhi.tgbot.request.*;
 import io.github.biezhi.tgbot.response.BotResponse;
 import io.github.biezhi.tgbot.response.GetMeResponse;
@@ -15,15 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.ByteArrayInputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static java.net.Proxy.Type.HTTP;
 
@@ -42,7 +37,9 @@ public class TelegramBot {
     private          FileApi fileApi;
     private volatile boolean startUpdates;
     private volatile boolean stopUpdates;
-    private Map<String, Consumer<Message>> mappings        = new HashMap<>();
+    private Map<String, Consumer<Message>> textMappings    = new HashMap<>();
+    private Consumer<Message>              stickerMapping  = null;
+    private Consumer<Message>              othersMapping   = null;
     private Options                        options         = Options.builder().build();
     private ExecutorService                executorService = Executors.newFixedThreadPool(options.getExecutorPoolSize());
 
@@ -84,6 +81,30 @@ public class TelegramBot {
     }
 
     /**
+     * 监听接收到贴纸
+     *
+     * @param consumer
+     * @return
+     */
+    public TelegramBot onSticker(Consumer<Message> consumer) {
+        this.stickerMapping = consumer;
+        this.start();
+        return this;
+    }
+
+    /**
+     * 监听除指令、贴纸、视频、图片、音频之外的消息
+     *
+     * @param consumer
+     * @return
+     */
+    public TelegramBot onOthers(Consumer<Message> consumer) {
+        this.othersMapping = consumer;
+        this.start();
+        return this;
+    }
+
+    /**
      * 监听指令
      *
      * @param cmdText  指令文本
@@ -91,11 +112,17 @@ public class TelegramBot {
      * @return
      */
     public TelegramBot onCmd(String cmdText, Consumer<Message> consumer) {
-        if (mappings.containsKey(cmdText)) {
+        if (textMappings.containsKey(cmdText)) {
             throw new BotException("请不要重复监听相同指令.");
         }
-        mappings.put(cmdText, consumer);
+        textMappings.put(cmdText, consumer);
+        this.start();
+        return this;
+    }
+
+    private TelegramBot start() {
         if (!startUpdates) {
+            log.info("Start listen bot message :)");
             startUpdates = true;
             GetUpdates getUpdates = new GetUpdates();
             this.getUpdates(getUpdates);
@@ -204,16 +231,34 @@ public class TelegramBot {
                     return;
                 }
                 List<Update> updates = response.getResult();
-                if (!mappings.isEmpty()) {
-                    Set<String> texts = mappings.keySet();
-                    updates.stream()
+                int          offset  = lastUpdateId(updates) + 1;
+
+                if (!textMappings.isEmpty()) {
+                    Set<String> texts = textMappings.keySet();
+                    List<Message> onTextUpdates = updates.stream()
                             .map(Update::getMessage)
                             .filter(message -> texts.contains(message.getText()))
-                            .forEach(message -> mappings.get(message.getText()).accept(message));
+                            .collect(Collectors.toList());
 
-                    int offset = lastUpdateId(updates) + 1;
-                    request = request.offset(offset);
+                    updates.retainAll(onTextUpdates);
+                    onTextUpdates.stream().parallel().forEach(message -> textMappings.get(message.getText()).accept(message));
                 }
+
+                if (null != stickerMapping) {
+                    List<Message> onStickerUpdates = updates.stream()
+                            .map(Update::getMessage)
+                            .filter(message -> null != message.getSticker())
+                            .collect(Collectors.toList());
+
+                    updates.retainAll(onStickerUpdates);
+                    onStickerUpdates.stream().parallel().forEach(message -> stickerMapping.accept(message));
+                }
+
+                if (null != othersMapping && updates.size() > 0) {
+                    updates.stream().parallel().map(Update::getMessage).forEach(message -> othersMapping.accept(message));
+                }
+
+                request = request.offset(offset);
                 sleep();
                 getUpdates(request);
             }
