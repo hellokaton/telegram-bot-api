@@ -1,12 +1,17 @@
 package io.github.biezhi.tgbot;
 
+import io.github.biezhi.tgbot.api.request.ReplyKeyboardMarkup;
+import io.github.biezhi.tgbot.request.GetFile;
+import io.github.biezhi.tgbot.request.GetStickerSet;
+import io.github.biezhi.tgbot.request.SendMessage;
+import io.github.biezhi.tgbot.response.GetFileResponse;
 import io.github.biezhi.tgbot.response.GetMeResponse;
+import io.github.biezhi.tgbot.response.GetStickerSetResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.concurrent.Executor;
 
 /**
  * 机器人测试代码
@@ -26,7 +31,9 @@ public class TelegramBotTest {
 
     @Before
     public void before() {
-        bot = new TelegramBot(TOKEN)/*.useProxy("127.0.0.1", 1087)*/;
+        bot = new TelegramBot(TOKEN)
+                .options(Options.builder().debug(true).readTimeout(30_000L).build())
+                .useProxy("127.0.0.1", 1087);
     }
 
     @Test
@@ -64,11 +71,43 @@ public class TelegramBotTest {
                     .onCmd("/img", message -> {
                         log.info("收到图片请求");
                         bot.photo(message, new File("/Users/biezhi/Pictures/20150812204022.jpeg"));
-                    });
-            //.await();
+                    })
+                    .onCmd("kbd", message -> {
+                        String[]            key                 = {"🌝", "🌚"};
+                        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(key);
+                        SendMessage         sendMessage         = new SendMessage(message.chatId(), "请选择一个表情");
+                        sendMessage.replyMarkup(replyKeyboardMarkup);
+                        bot.execute(sendMessage);
+                    })
+                    .onCmd("🌚", message -> bot.text(message, "你选择了小黑"))
+                    .await();
         } catch (Exception e) {
             log.error("", e);
         }
+    }
+
+    @Test
+    public void testDownLoad() {
+        GetFile         getFile         = new GetFile("CAADBQADMAADSZ7ACjho6kUMMDxaAg");
+        GetFileResponse getFileResponse = bot.execute(getFile);
+        String          fileLink        = bot.getFullFilePath(getFileResponse.getResult());
+        System.out.println(fileLink);
+    }
+
+    /**
+     * 获取StickerSet的思路
+     * <p>
+     * 1、向Bot发送一张贴纸
+     * 2、根据该贴纸获取贴纸名称（sticker.set_name）
+     * 3、根据set_name获取StickerSet
+     * 4、遍历StickerSet中的贴纸，逐个进行下载
+     * 5、调用webp-io将贴纸转换为png图片
+     */
+    @Test
+    public void testGetStickerSet() {
+        GetStickerSet         getStickerSet      = new GetStickerSet("miaomiaomiao2");
+        GetStickerSetResponse stickerSetResponse = bot.execute(getStickerSet);
+        System.out.println(stickerSetResponse);
     }
 
 }
