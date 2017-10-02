@@ -2,7 +2,7 @@ package io.github.biezhi.tgbot;
 
 import com.google.gson.Gson;
 import io.github.biezhi.request.Request;
-import io.github.biezhi.tgbot.api.File;
+import io.github.biezhi.tgbot.api.FileItem;
 import io.github.biezhi.tgbot.api.FileApi;
 import io.github.biezhi.tgbot.api.Message;
 import io.github.biezhi.tgbot.api.Update;
@@ -323,7 +323,7 @@ public class TelegramBot {
 //        });
     }
 
-    public String getFullFilePath(File file) {
+    public String getFullFilePath(FileItem file) {
         return fileApi.getFullFilePath(file.getFile_path());
     }
 

@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class File implements Serializable {
+public class FileItem implements Serializable {
 
     private final static long serialVersionUID = 0L;
 
