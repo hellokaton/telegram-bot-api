@@ -88,7 +88,7 @@ public class TelegramBotTest {
 
     @Test
     public void testDownLoad() {
-        GetFile         getFile         = new GetFile("CAADBQADMAADSZ7ACjho6kUMMDxaAg");
+        GetFile         getFile         = new GetFile("fileId");
         GetFileResponse getFileResponse = bot.execute(getFile);
         String          fileLink        = bot.getFullFilePath(getFileResponse.getResult());
         System.out.println(fileLink);
