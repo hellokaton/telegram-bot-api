@@ -4,7 +4,9 @@
 
 [![CI](https://img.shields.io/travis/biezhi/telegram-bot-api.svg)](https://travis-ci.org/biezhi/telegram-bot-api)
 [![Maven](https://img.shields.io/maven-central/v/io.github.biezhi/telegram-bot-api.svg)](http://search.maven.org/#search%7Cga%7C1%7C/telegram-bot-api)
-[![LICENSE](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](LICENSE)
+[![](https://img.shields.io/badge/license-Apache2-FF0080.svg)](https://github.com/biezhi/telegram-bot-api/blob/master/LICENSE)
+[![@biezhi on zhihu](https://img.shields.io/badge/zhihu-%40biezhi-red.svg)](https://www.zhihu.com/people/biezhi)
+[![](https://img.shields.io/github/followers/biezhi.svg?style=social&label=Follow%20Me)](https://github.com/biezhi)
 
 ## 特性
 
@@ -66,5 +68,5 @@ bot.onOther(message -> {
 
 ## 开源协议
 
-[Apache2](LICENSE)
+[Apache2](https://github.com/biezhi/telegram-bot-api/blob/master/LICENSE)
 
